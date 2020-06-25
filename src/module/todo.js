@@ -156,6 +156,6 @@ export class TodoController {
   }
 }
 
-export function useTodo(rootEl) {
+export function createTodo(rootEl) {
   return new TodoController(TodoListView, TodoListModel, rootEl);
 }

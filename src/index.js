@@ -1,3 +1,3 @@
-import {useTodo} from './module/todo.js';
+import {createTodo} from './module/todo.js';
 
-useTodo(document.querySelector('#app'));
+createTodo(document.querySelector('#app'));
