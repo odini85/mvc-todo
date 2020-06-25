@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint src",
     "test": "jest --watchAll --coverage",
-    "bundle": "webpack --watch --config webpack.config.js",
+    "build": "webpack --watch --config webpack.config.js",
     "production": "webpack",
     "dev": "webpack-dev-server --config webpack.config.js --open --mode=development"
   },
