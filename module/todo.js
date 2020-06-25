@@ -123,7 +123,6 @@ export class TodoListView {
 export class TodoController {
   constructor(rootEl) {
     this.eventEmitter = new EventEmitter();
-    window.e = this.eventEmitter;
     this.view = new TodoListView(this.eventEmitter, rootEl);
     this.listModel = new TodoListModel(this.eventEmitter);
   }
