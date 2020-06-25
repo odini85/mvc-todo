@@ -1,16 +1,22 @@
+/* eslint-disable no-undef */
 module.exports = {
   env: {
     browser: true,
-    commonjs: true,
-    es6: true,
+    es2020: true,
     jest: true
   },
-  extends: ['eslint-config-prettier'],
   parserOptions: {
-    ecmaVersion: 2015,
+    ecmaVersion: 11,
     sourceType: 'module'
   },
-  rules: {
-    'no-console': 'off'
-  }
+  plugins: ['babel', 'prettier'],
+  extends: ['eslint:recommended', 'prettier'],
+  overrides: [
+    {
+      files: ['**/__tests__/*.{j,t}s?(x)', '**/tests/unit/**/*.spec.{j,t}s?(x)'],
+      env: {
+        jest: true
+      }
+    }
+  ]
 };

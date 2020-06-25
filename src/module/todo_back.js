@@ -10,28 +10,29 @@ export class TodoItemModel {
 }
 
 export class TodoListModel {
-  constructor(eventExecutor) {
-    this.eventExecutor = eventExecutor;
+  constructor(eventEmitter) {
+    this.eventEmitter = eventEmitter;
     this.todos = [];
     this.id = 0;
+    this.eventEmitter.on('view:add', this.add.bind(this));
+    this.eventEmitter.on('view:remove', this.remove.bind(this));
+    this.eventEmitter.on('view:done', this.toggle.bind(this));
   }
   add(text) {
     const id = this.id++;
     const createAt = new Date();
     const isDone = false;
-    this.todos.unshift(new TodoItemModel(id, text, createAt, isDone));
-    this.eventExecutor('model:add', this.todos);
+    this.todos.push(new TodoItemModel(id, text, createAt, isDone));
+    this.eventEmitter.fire('model:add', this.todos);
   }
   toggle(toggleId) {
     const item = this.todos.find(({id}) => {
       return toggleId === id;
     });
-    if (!item) {
-      return;
+    if (item) {
+      item.isDone = !item.isDone;
     }
-
-    item.isDone = !item.isDone;
-    this.eventExecutor('model:toggle', this.todos);
+    this.eventEmitter.fire('model:toggle', this.todos);
   }
   remove(removeId) {
     let isSucceeded = false;
@@ -42,7 +43,7 @@ export class TodoListModel {
       return removeId !== id;
     });
     if (isSucceeded) {
-      this.eventExecutor('model:remove', this.todos);
+      this.eventEmitter.fire('model:remove', this.todos);
     }
     return isSucceeded;
   }
@@ -52,11 +53,14 @@ export class TodoListModel {
 }
 
 export class TodoListView {
-  constructor(rootEl, eventExecutor) {
+  constructor(eventEmitter, rootEl) {
     this.rootEl = rootEl;
-    this.eventExecutor = eventExecutor;
+    this.eventEmitter = eventEmitter;
     this.renderOutline();
     this.bindEvent();
+    this.eventEmitter.on('model:add', this.renderList.bind(this));
+    this.eventEmitter.on('model:remove', this.renderList.bind(this));
+    this.eventEmitter.on('model:toggle', this.renderList.bind(this));
   }
   renderOutline() {
     this.rootEl.innerHTML = `
@@ -83,79 +87,41 @@ export class TodoListView {
           `;
       })
       .join('');
-
     this.rootEl.querySelector('.uid_list').innerHTML = html;
   }
   bindEvent() {
     const formEl = this.rootEl.querySelector('.uid_form');
     const listEl = this.rootEl.querySelector('.uid_list');
-
     formEl.addEventListener('submit', this.handlerSubmit.bind(this));
     listEl.addEventListener('click', this.handlerList.bind(this));
   }
   handlerSubmit(e) {
     e.preventDefault();
     const textEl = this.rootEl.querySelector('.uid_text');
-    const value = textEl.value.trim();
-    if (!value) {
-      return;
+    const {value} = textEl;
+    if (value.trim()) {
+      this.eventEmitter.fire('view:add', value);
+      textEl.value = '';
     }
-
-    textEl.value = '';
-    this.eventExecutor('view:add', value);
   }
   handlerList(e) {
     const tagName = e.target.tagName.toLowerCase();
-    if (tagName !== 'button') {
-      return;
-    }
-
-    const id = Number(e.target.getAttribute('data-id'));
-    const type = e.target.getAttribute('data-type');
-    if (type === 'done') {
-      this.eventExecutor('view:done', id);
-    } else if (type === 'remove') {
-      this.eventExecutor('view:remove', id);
+    if (tagName === 'button') {
+      const id = Number(e.target.getAttribute('data-id'));
+      const type = e.target.getAttribute('data-type');
+      if (type === 'done') {
+        this.eventEmitter.fire('view:done', id);
+      } else if (type === 'remove') {
+        this.eventEmitter.fire('view:remove', id);
+      }
     }
   }
 }
 
 export class TodoController {
-  constructor(ViewClass, ModelClass, rootEl) {
+  constructor(rootEl) {
     this.eventEmitter = new EventEmitter();
-    this.view = new ViewClass(rootEl, this.eventExecutor.bind(this));
-    this.model = new ModelClass(this.eventExecutor.bind(this));
-
-    this.subscribeRegister();
+    this.view = new TodoListView(this.eventEmitter, rootEl);
+    this.listModel = new TodoListModel(this.eventEmitter);
   }
-  eventExecutor(eventName, ...rest) {
-    this.eventEmitter.fire(eventName, ...rest);
-  }
-  subscribeRegister() {
-    // view
-    this.eventEmitter.on('view:add', (...rest) => {
-      this.model.add(...rest);
-    });
-    this.eventEmitter.on('view:remove', (...rest) => {
-      this.model.remove(...rest);
-    });
-    this.eventEmitter.on('view:done', (...rest) => {
-      this.model.toggle(...rest);
-    });
-
-    // model
-    this.eventEmitter.on('model:add', (...rest) => {
-      this.view.renderList(...rest);
-    });
-    this.eventEmitter.on('model:remove', (...rest) => {
-      this.view.renderList(...rest);
-    });
-    this.eventEmitter.on('model:toggle', (...rest) => {
-      this.view.renderList(...rest);
-    });
-  }
-}
-
-export function useTodo(rootEl) {
-  return new TodoController(TodoListView, TodoListModel, rootEl);
 }

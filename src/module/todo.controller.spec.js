@@ -1,5 +1,4 @@
 import {TodoController} from './todo.js';
-import EventEmitter from './event-emitter.js';
 
 document.body.innerHTML = '<div id="app"></div>';
 

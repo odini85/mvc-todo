@@ -1,3 +1,3 @@
-import { TodoController } from "./module/todo.js";
+import {useTodo} from './module/todo.js';
 
-new TodoController(document.querySelector("#app"));
+useTodo(document.querySelector('#app'));
