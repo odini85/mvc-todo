@@ -1,5 +1,11 @@
 import EventEmitter from './event-emitter.js';
 
+class EventExecutor {
+  bindEventExecutor(controller) {
+    this.eventExecutor = controller.eventExecutor.bind(controller);
+  }
+  eventExecutor() {}
+}
 export class TodoItemModel {
   constructor(id, text, createAt, isDone) {
     this.text = text;
@@ -9,9 +15,9 @@ export class TodoItemModel {
   }
 }
 
-export class TodoListModel {
-  constructor(eventExecutor) {
-    this.eventExecutor = eventExecutor;
+export class TodoListModel extends EventExecutor {
+  constructor() {
+    super();
     this.todos = [];
     this.id = 0;
   }
@@ -51,10 +57,10 @@ export class TodoListModel {
   }
 }
 
-export class TodoListView {
-  constructor(rootEl, eventExecutor) {
+export class TodoListView extends EventExecutor {
+  constructor(rootEl) {
+    super();
     this.rootEl = rootEl;
-    this.eventExecutor = eventExecutor;
     this.renderOutline();
     this.bindEvent();
   }
@@ -121,11 +127,13 @@ export class TodoListView {
 }
 
 export class TodoController {
-  constructor(ViewClass, ModelClass, rootEl) {
+  constructor(view, model) {
     this.eventEmitter = new EventEmitter();
-    this.view = new ViewClass(rootEl, this.eventExecutor.bind(this));
-    this.model = new ModelClass(this.eventExecutor.bind(this));
+    this.view = view;
+    this.model = model;
 
+    view.bindEventExecutor(this);
+    model.bindEventExecutor(this);
     this.subscribeRegister();
   }
   eventExecutor(eventName, ...rest) {
@@ -157,5 +165,7 @@ export class TodoController {
 }
 
 export function createTodo(rootEl) {
-  return new TodoController(TodoListView, TodoListModel, rootEl);
+  const view = new TodoListView(rootEl);
+  const model = new TodoListModel();
+  return new TodoController(view, model);
 }
